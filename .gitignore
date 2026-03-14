@@ -1,0 +1,16 @@
+/.bsp/
+
+# Scala/SBT
+target/
+project/target/
+project/project/
+.history/
+.bloop/
+.metals/
+.ammonite/
+
+# IDEs
+.vscode/
+
+
+
