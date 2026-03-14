@@ -6,7 +6,7 @@ import org.apache.spark.sql.types._
 
 object Main {
   def main(args: Array[String]): Unit = {
-    // 1. Initialize Spark Session
+    //Initialize Spark Session
     val spark = SparkSession.builder()
       .appName("TPCH-UDF-Runner")
       .master("local[*]")
@@ -14,7 +14,7 @@ object Main {
 
     import spark.implicits._
 
-    // 2. Define TPC-H Schemas
+    //Define TPC-H Schemas
     val customerSchema = StructType(Seq(
       StructField("c_custkey", LongType),
       StructField("c_name", StringType),
@@ -38,9 +38,8 @@ object Main {
       StructField("o_comment", StringType)
     ))
 
-    // 3. Load TPC-H Data (Note: .tbl files use '|' and often have a trailing pipe)
-    // Adjust the path below to match your project root
-    val tpchPath = "tpch-kit/dbgen"
+    //Load TPC-H Data into spark
+    val tpchPath = "tpchData"
 
     val customerDF = spark.read
       .option("delimiter", "|")
@@ -55,7 +54,7 @@ object Main {
     customerDF.createOrReplaceTempView("customer")
     ordersDF.createOrReplaceTempView("orders")
 
-    // 4. Create Mock Data for Custom Tables (Not in TPC-H)
+    //Mock Data for Custom Tables (Not in TPC-H)
     val prefsDF = Seq(
       (1L, "EUR"), (2L, "GBP"), (3L, "JPY"), (4L, "CAD")
     ).toDF("custkey", "currency")
@@ -69,16 +68,14 @@ object Main {
     ).toDF("from_cur", "to_cur", "rate")
     xchgDF.createOrReplaceTempView("xchg")
 
-    // 5. Register the UDF
-    // Replicates: total_price(sum_price, rate, currency)
+    // Register the UDF
     spark.udf.register("total_price", (totalPrice: Double, rate: Double, prefCurrency: String) => {
       val defaultCurrency = "USD"
       val finalPrice = if (prefCurrency != defaultCurrency) totalPrice * rate else totalPrice
       f"$finalPrice%.2f $prefCurrency"
     })
 
-    // 6. Execute Integrated Query
-    // This aggregates the orders first to get the total sum per customer, then applies the UDF
+    
     val result = spark.sql("""
       WITH customer_totals AS (
         SELECT o_custkey, SUM(o_totalprice) as total_sum

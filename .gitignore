@@ -12,5 +12,8 @@ project/project/
 # IDEs
 .vscode/
 
+#tpch
+tpch-kit
+
 
 
